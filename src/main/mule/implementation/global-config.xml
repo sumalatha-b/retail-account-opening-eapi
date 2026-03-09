@@ -12,9 +12,9 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 	  <http:listener-config name="experience-eapi-httpListenerConfig">
         <http:listener-connection host="0.0.0.0" port="8081" />
     </http:listener-config>
-    <apikit:config name="experience-eapi-config" api="resource::a09c0161-1d9b-4ade-9a09-0e11e7d07848:experience-eapi:1.0.13:oas:zip:experience-eapi.yaml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <apikit:config name="experience-eapi-config" api="resource::a09c0161-1d9b-4ade-9a09-0e11e7d07848:experience-eapi:1.0.17:oas:zip:experience-eapi.yaml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
 	<http:request-config name="accountOpeningPapi_config" doc:name="HTTP Request config" doc:id="f51ce3e7-4816-4ce4-a9ef-3c39357c61e3" >
-		<http:request-connection protocol="HTTPS">
+		<http:request-connection protocol="HTTPS" host="${accountOpeningPapi.host}" port="${accountOpeningPapi.port}">
 			<tls:context >
 				<tls:trust-store insecure="true" />
 			</tls:context>
@@ -22,5 +22,5 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 	</http:request-config>
 	<configuration-properties doc:name="Configuration properties" doc:id="d3d59167-7d60-4580-9bc2-c7356510f561" file="properties/dev.yaml" />
 	<api-gateway:autodiscovery apiId="20771121" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="ade25b54-f7de-4f1a-a656-79a1d0143fe3" flowRef="experience-eapi-main" />
-	 
+ 	 
 </mule>
