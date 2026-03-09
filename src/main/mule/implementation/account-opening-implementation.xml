@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="retail--account-opening-start-subFlow" doc:id="61acbdf2-0683-4682-8675-9fb601ec2489" >
+		<logger level="INFO" doc:name="Start of the flow" doc:id="df6d0d5d-9d85-4dae-88c5-301bf3344954" message="#[payload]"/>
+		<ee:transform doc:name="requestPayload to PAPI" doc:id="4710221a-8d5b-42a0-afcb-0777799e4d4b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+  "customerOnboardingChannel": payload.channel,
+  "productServiceType": payload.productType,
+  "customerOnboardingSchedule": "Standard",
+  "prospectType": "INDIVIDUAL",
+   "fullName": payload.fullName,
+  "email": if (!isEmpty(payload.email)) payload.email else null,
+  "phoneNumber": if (!isEmpty(payload.phoneNumber)) payload.phoneNumber else null
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="inputPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="endpoint" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"method": "POST",
+	"path": p('accountOpeningPapi.onboardingcases')
+	
+	}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="call to PAPI" doc:id="39b94c50-37c8-486d-b38b-173a3289b091" name="commonflowTo-PAPI-Sub_Flow"/>
+		<ee:transform doc:name="finalResponce" doc:id="ba725039-c3ec-404d-bf69-ce15c198a314" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+payload ++ {
+"fullName": vars.inputPayload.fullName,
+  "email": if (!isEmpty(vars.inputPayload.email)) vars.inputPayload.email else null,
+  "phoneNumber": if (!isEmpty(vars.inputPayload.phoneNumber)) vars.inputPayload.phoneNumber else null
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="End of the flow" doc:id="b9b2efe7-2c5f-41b6-80fc-7eac067d35e2" message="#[payload]" />
+	</sub-flow>
+	<sub-flow name="retail-customer-create-subFlow" doc:id="05131460-2943-40c3-813b-6fa9668367ce" >
+		<logger level="INFO" doc:name="Start of the flow" doc:id="9d2819ee-977c-4444-88e4-918531f4ac61" message="#[payload]" />
+		<ee:transform doc:name="requestPayload to PAPI" doc:id="09705a2c-df89-4d25-95f1-8def21a50380" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+  "customerOnboardingChannel": payload.channel,
+  "productServiceType": payload.productType,
+  "customerOnboardingSchedule": "Standard",
+  "prospectType": "INDIVIDUAL",
+   "fullName": payload.fullName,
+  "email": if (!isEmpty(payload.email)) payload.email else null,
+  "phoneNumber": if (!isEmpty(payload.phoneNumber)) payload.phoneNumber else null
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="inputPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="endpoint" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"method": "POST",
+	"path": p('accountOpeningPapi.partyReferenceParties')
+	
+	}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="call to PAPI" doc:id="b62149f0-d9f0-4918-a0c9-98ff9e1ccb19" name="commonflowTo-PAPI-Sub_Flow" />
+		<ee:transform doc:name="finalResponce" doc:id="81c0ba64-fa17-48c9-9ec1-d6a70ed30265" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+payload ++ {
+"fullName": vars.inputPayload.fullName,
+  "email": if (!isEmpty(vars.inputPayload.email)) vars.inputPayload.email else null,
+  "phoneNumber": if (!isEmpty(vars.inputPayload.phoneNumber)) vars.inputPayload.phoneNumber else null
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="End of the flow" doc:id="1726c2a7-e774-4a73-ab48-36d7143c3826" message="#[payload]" />
+	</sub-flow>
+	<sub-flow name="retail-account-opening-caseID-link-customer-subFlow" doc:id="97f105df-32f7-4a8b-ab08-099b27904b3c" >
+		<logger level="INFO" doc:name="Start of the flow" doc:id="fff23bce-b435-436e-a6b7-c4327e6a9c48" message="#[payload]" />
+		<ee:transform doc:name="requestPayload to PAPI" doc:id="07031969-cd78-486b-b1cb-0c89c47119fe" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+  "customerOnboardingChannel": payload.channel,
+  "productServiceType": payload.productType,
+  "customerOnboardingSchedule": "Standard",
+  "prospectType": "INDIVIDUAL",
+   "fullName": payload.fullName,
+  "email": if (!isEmpty(payload.email)) payload.email else null,
+  "phoneNumber": if (!isEmpty(payload.phoneNumber)) payload.phoneNumber else null
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="inputPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="endpoint" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"method": "POST",
+	"path": p('accountOpeningPapi.onboardingCustomerCaseID')
+	
+	}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="call to PAPI" doc:id="3bea09a1-bde0-494a-8b7a-a97f41d8ec45" name="commonflowTo-PAPI-Sub_Flow" />
+		<ee:transform doc:name="finalResponce" doc:id="1848ef10-cd3e-4ddd-b646-bd90d73918ea" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+payload ++ {
+"fullName": vars.inputPayload.fullName,
+  "email": if (!isEmpty(vars.inputPayload.email)) vars.inputPayload.email else null,
+  "phoneNumber": if (!isEmpty(vars.inputPayload.phoneNumber)) vars.inputPayload.phoneNumber else null
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="End of the flow" doc:id="6df05cd4-225c-4743-a8dd-98d1e3f4fe64" message="#[payload]" />
+	</sub-flow>
+	<sub-flow name="retail-products-eligibility-check-subFlow" doc:id="418f6ffb-c299-4d79-912a-83ecada1104c" >
+		<logger level="INFO" doc:name="Start of the flow" doc:id="e939b261-178d-43de-bfca-3e028e598d44" message="#[payload]" />
+		<ee:transform doc:name="requestPayload to PAPI" doc:id="0b62a760-4b6c-468e-8923-8a63916b1000" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+  "customerOnboardingChannel": payload.channel,
+  "productServiceType": payload.productType,
+  "customerOnboardingSchedule": "Standard",
+  "prospectType": "INDIVIDUAL",
+   "fullName": payload.fullName,
+  "email": if (!isEmpty(payload.email)) payload.email else null,
+  "phoneNumber": if (!isEmpty(payload.phoneNumber)) payload.phoneNumber else null
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="inputPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="endpoint" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"method": "POST",
+	"path": p('accountOpeningPapi.eligibilityChecks')
+	
+	}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="call to PAPI" doc:id="dd03f9fa-6ce0-4053-bf79-b952e5e1ce5a" name="commonflowTo-PAPI-Sub_Flow" />
+		<ee:transform doc:name="finalResponce" doc:id="e1e01584-7a03-4f49-b430-3e6aff70ff26" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+payload ++ {
+"fullName": vars.inputPayload.fullName,
+  "email": if (!isEmpty(vars.inputPayload.email)) vars.inputPayload.email else null,
+  "phoneNumber": if (!isEmpty(vars.inputPayload.phoneNumber)) vars.inputPayload.phoneNumber else null
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="End of the flow" doc:id="d47c975e-9fa6-48da-922d-67dd94fec6e4" message="#[payload]" />
+	</sub-flow>
+	<sub-flow name="retail-kyc-initiate-subFlow" doc:id="5d945576-fe31-4f4c-a626-ddd2bd5ca8a9" >
+		<logger level="INFO" doc:name="Start of the flow" doc:id="d9db0200-a726-46c7-acb7-f1b04257631b" message="#[payload]" />
+		<ee:transform doc:name="requestPayload to PAPI" doc:id="1c53fd30-4342-41d2-b661-dbdf9e7a5ef5" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+  "customerOnboardingChannel": payload.channel,
+  "productServiceType": payload.productType,
+  "customerOnboardingSchedule": "Standard",
+  "prospectType": "INDIVIDUAL",
+   "fullName": payload.fullName,
+  "email": if (!isEmpty(payload.email)) payload.email else null,
+  "phoneNumber": if (!isEmpty(payload.phoneNumber)) payload.phoneNumber else null
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="inputPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="endpoint" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"method": "POST",
+	"path": p('accountOpeningPapi.kycCases')
+	
+	}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="call to PAPI" doc:id="c574962b-8e53-49a1-8855-3f4dc2b27e07" name="commonflowTo-PAPI-Sub_Flow" />
+		<ee:transform doc:name="finalResponce" doc:id="8cbe71f0-b689-4b69-96e6-6aaa059c3257" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+payload ++ {
+"fullName": vars.inputPayload.fullName,
+  "email": if (!isEmpty(vars.inputPayload.email)) vars.inputPayload.email else null,
+  "phoneNumber": if (!isEmpty(vars.inputPayload.phoneNumber)) vars.inputPayload.phoneNumber else null
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="End of the flow" doc:id="49d3b263-6567-4013-8f3f-b2304ccabe34" message="#[payload]" />
+	</sub-flow>
+	<sub-flow name="retail-documents-generate-pack-subFlow" doc:id="60b8d31f-f217-4096-a583-9d0ef0fcd8a8" >
+		<logger level="INFO" doc:name="Start of the flow" doc:id="88ed7ec5-cba8-49ff-b069-6276e45a99ef" message="#[payload]" />
+		<ee:transform doc:name="requestPayload to PAPI" doc:id="86ff17aa-19bb-4eda-abfa-ec85ec6e7abc" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+  "customerOnboardingChannel": payload.channel,
+  "productServiceType": payload.productType,
+  "customerOnboardingSchedule": "Standard",
+  "prospectType": "INDIVIDUAL",
+   "fullName": payload.fullName,
+  "email": if (!isEmpty(payload.email)) payload.email else null,
+  "phoneNumber": if (!isEmpty(payload.phoneNumber)) payload.phoneNumber else null
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="inputPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="endpoint" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"method": "POST",
+	"path": p('accountOpeningPapi.documentServices')
+	
+	}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="call to PAPI" doc:id="b75bdbe0-b9ce-41e0-9904-8ff2c03eb113" name="commonflowTo-PAPI-Sub_Flow" />
+		<ee:transform doc:name="finalResponce" doc:id="6c2e720c-4afa-4efd-ac2d-f2c19d38629b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+payload ++ {
+"fullName": vars.inputPayload.fullName,
+  "email": if (!isEmpty(vars.inputPayload.email)) vars.inputPayload.email else null,
+  "phoneNumber": if (!isEmpty(vars.inputPayload.phoneNumber)) vars.inputPayload.phoneNumber else null
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="End of the flow" doc:id="4912076e-18cf-4ffa-98bd-6d5d31d64e6d" message="#[payload]" />
+	</sub-flow>
+	<sub-flow name="retail-documents-doucmentId-sign-subFlow" doc:id="972ad918-3b66-402c-9331-e640f16222f7" >
+		<logger level="INFO" doc:name="Start of the flow" doc:id="9762ea2b-c5af-4457-a7e5-ba153e95c0cd" message="#[payload]" />
+		<ee:transform doc:name="requestPayload to PAPI" doc:id="07fb55cc-c131-4b8d-8db2-4d60b7fe6bca" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+  "customerOnboardingChannel": payload.channel,
+  "productServiceType": payload.productType,
+  "customerOnboardingSchedule": "Standard",
+  "prospectType": "INDIVIDUAL",
+   "fullName": payload.fullName,
+  "email": if (!isEmpty(payload.email)) payload.email else null,
+  "phoneNumber": if (!isEmpty(payload.phoneNumber)) payload.phoneNumber else null
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="inputPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="endpoint" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"method": "POST",
+	"path": p('accountOpeningPapi.documentServicesSignature')
+	
+	}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="call to PAPI" doc:id="7179dbc9-3a8a-4ca1-8037-627c3788245b" name="commonflowTo-PAPI-Sub_Flow" />
+		<ee:transform doc:name="finalResponce" doc:id="aeecc9ff-eb54-492a-b7f4-7feb3fc5e13c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+payload ++ {
+"fullName": vars.inputPayload.fullName,
+  "email": if (!isEmpty(vars.inputPayload.email)) vars.inputPayload.email else null,
+  "phoneNumber": if (!isEmpty(vars.inputPayload.phoneNumber)) vars.inputPayload.phoneNumber else null
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="End of the flow" doc:id="877f45c9-5134-45e2-a6c9-b6fdd866867c" message="#[payload]" />
+	</sub-flow>
+	<sub-flow name="retail-account-opening-caseId-approve-subFlow" doc:id="e09d2602-3153-4140-a0df-b78ff78f865a" >
+		<logger level="INFO" doc:name="Start of the flow" doc:id="726aa9b1-6635-466b-8651-a4752c70de4a" message="#[payload]" />
+		<ee:transform doc:name="requestPayload to PAPI" doc:id="9bb97583-d66c-4ade-b9a9-372c7fd74e16" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+  "customerOnboardingChannel": payload.channel,
+  "productServiceType": payload.productType,
+  "customerOnboardingSchedule": "Standard",
+  "prospectType": "INDIVIDUAL",
+   "fullName": payload.fullName,
+  "email": if (!isEmpty(payload.email)) payload.email else null,
+  "phoneNumber": if (!isEmpty(payload.phoneNumber)) payload.phoneNumber else null
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="inputPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="endpoint" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"method": "POST",
+	"path": p('accountOpeningPapi.onboardingCasesApprovals')
+	
+	}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="call to PAPI" doc:id="230ad2f8-3b13-4753-88aa-8b3333fe050a" name="commonflowTo-PAPI-Sub_Flow" />
+		<ee:transform doc:name="finalResponce" doc:id="fb63df9e-e557-479d-88a1-ce6da551a299" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+payload ++ {
+"fullName": vars.inputPayload.fullName,
+  "email": if (!isEmpty(vars.inputPayload.email)) vars.inputPayload.email else null,
+  "phoneNumber": if (!isEmpty(vars.inputPayload.phoneNumber)) vars.inputPayload.phoneNumber else null
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="End of the flow" doc:id="9300a85a-766d-49fa-9da7-ca3696d5fdf4" message="#[payload]" />
+	</sub-flow>
+	<sub-flow name="retail-accounts-checking-open-subFlow" doc:id="6668c4bc-b4c2-460e-a343-c8aa0a0dce4e" >
+		<logger level="INFO" doc:name="Start of the flow" doc:id="73e5ea31-ab79-49f8-90df-eeab3fb55917" message="#[payload]" />
+		<ee:transform doc:name="requestPayload to PAPI" doc:id="b1240116-dfa2-476a-9d4a-96642437d1c6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+  "customerOnboardingChannel": payload.channel,
+  "productServiceType": payload.productType,
+  "customerOnboardingSchedule": "Standard",
+  "prospectType": "INDIVIDUAL",
+   "fullName": payload.fullName,
+  "email": if (!isEmpty(payload.email)) payload.email else null,
+  "phoneNumber": if (!isEmpty(payload.phoneNumber)) payload.phoneNumber else null
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="inputPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="endpoint" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"method": "POST",
+	"path": p('accountOpeningPapi.currentAccounts')
+	
+	}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="call to PAPI" doc:id="eeafba7a-3a19-4ed7-bee2-b7730d72ffb7" name="commonflowTo-PAPI-Sub_Flow" />
+		<ee:transform doc:name="finalResponce" doc:id="d82f4a17-a9db-4a2b-8f01-8d35dffad03a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+payload ++ {
+"fullName": vars.inputPayload.fullName,
+  "email": if (!isEmpty(vars.inputPayload.email)) vars.inputPayload.email else null,
+  "phoneNumber": if (!isEmpty(vars.inputPayload.phoneNumber)) vars.inputPayload.phoneNumber else null
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="End of the flow" doc:id="09133cd3-87c9-488b-8578-1ab092819e39" message="#[payload]" />
+	</sub-flow>
+</mule>

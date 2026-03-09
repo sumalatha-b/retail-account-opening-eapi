@@ -1,0 +1,515 @@
+openapi: 3.0.0
+info:
+  title: Retail Account Opening API
+  version: 1.0.0
+  description: End-to-end Retail Banking Account Opening APIs
+
+paths:
+
+  /retail/account-opening/start:
+    post:
+      summary: Start retail account opening
+      operationId: startAccountOpening
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountOpeningRequest'
+      responses:
+        '201':
+          description: Account opening case created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountOpeningResponse'
+        '400':
+          description: Bad Request
+
+  /retail/customer/create:
+    post:
+      summary: Create Retail Customer
+      operationId: createCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCustomerRequest'
+      responses:
+        '201':
+          description: Customer created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCustomerResponse'
+        '400':
+          description: Bad Request
+
+  /retail/account-opening/{caseId}/link-customer:
+    put:
+      summary: Link customer to account opening case
+      operationId: linkCustomerToCase
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^CASE-[0-9]{4,10}$'
+            example: CASE-1001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkCustomerRequest'
+      responses:
+        '200':
+          description: Customer linked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkCustomerResponse'
+
+  /retail/products/eligibility-check:
+    post:
+      summary: Check product eligibility
+      operationId: checkEligibility
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EligibilityCheckRequest'
+      responses:
+        '200':
+          description: Eligibility evaluation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EligibilityCheckResponse'
+
+  /retail/kyc/initiate:
+    post:
+      summary: Initiate KYC process
+      operationId: initiateKyc
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KycInitiateRequest'
+      responses:
+        '200':
+          description: KYC initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KycInitiateResponse'
+
+  /retail/documents/generate-pack:
+    post:
+      summary: Generate Document Pack
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateDocumentPackRequest'
+      responses:
+        '200':
+          description: Document Pack Generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateDocumentPackResponse'
+
+  /retail/documents/{documentId}/sign:
+    post:
+      summary: Sign Document
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^DOC-[A-Z0-9\-]{3,20}$'
+            example: DOC-12345
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignDocumentRequest'
+      responses:
+        '200':
+          description: Document Signed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignDocumentResponse'
+
+  /retail/account-opening/{caseId}/approve:
+    post:
+      summary: Approve Account Opening Case
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^CASE-[0-9]{4,10}$'
+            example: CASE-1001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApproveCaseRequest'
+      responses:
+        '200':
+          description: Case Approved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApproveCaseResponse'
+
+  /retail/accounts/checking/open:
+    post:
+      summary: Open Checking Account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenCheckingAccountRequest'
+      responses:
+        '200':
+          description: Account Opened Successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenCheckingAccountResponse'
+
+components:
+
+  schemas:
+
+    AccountOpeningRequest:
+      type: object
+      required: [channel, fullName, productType]
+      properties:
+        channel:
+          type: string
+          enum: [MOBILE, WEB, BRANCH]
+          example: MOBILE
+        productType:
+          type: string
+          enum: [RETAIL_CURRENT_ACCOUNT, SAVINGS_ACCOUNT, CHECKING_ACCOUNT]
+          example: checking
+        fullName:
+          type: string
+          minLength: 2
+          maxLength: 100
+          pattern: '^[A-Za-z]{1,50}(?:[ ''-][A-Za-z]{1,50})*$'
+          example: "John A Deo"
+        email:
+          type: string
+          format: email
+          pattern: '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
+          example: john.doe@email.com
+        phone:
+          type: string
+          description: US phone number in E.164 format (+1XXXXXXXXXX)
+          pattern: '^\+1[2-9]\d{2}[2-9]\d{6}$'
+          minLength: 12
+          maxLength: 12
+          example: "+14085551234"
+      anyOf:
+        - required: [email]
+        - required: [phone]
+
+    AccountOpeningResponse:
+      type: object
+      properties:
+        caseId:
+          type: string
+          pattern: '^CASE-[0-9]{4,10}$'
+          example: CASE-100045
+
+    CreateCustomerRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - dateOfBirth
+        - ssn
+        - email
+        - phone
+        - address
+        - proofOfIdentity
+        - proofOfAddress
+      properties:
+        firstName:
+          type: string
+          pattern: '^[A-Za-z]{1,50}$'
+          example: John
+        middleName:
+          type: string
+          pattern: '^[A-Za-z]{0,50}$'
+          example: A
+        lastName:
+          type: string
+          pattern: '^[A-Za-z]{1,50}$'
+          example: Doe
+        dateOfBirth:
+          type: string
+          format: date
+          example: 1990-01-15
+        ssn:
+          type: string
+          pattern: '^\d{3}-\d{2}-\d{4}$'
+          example: "123-45-6789"
+        email:
+          type: string
+          format: email
+          example: john.doe@email.com
+        phone:
+          type: string
+          pattern: '^\+[1-9]\d{1,14}$'
+          example: "+15551234567"
+        address:
+          $ref: '#/components/schemas/Address'
+        proofOfIdentity:
+          type: string
+          enum: [Passport, DriverLicense, NationalID]
+          example: Passport
+        proofOfAddress:
+          type: string
+          enum: [UtilityBill, BankStatement, RentalAgreement]
+          example: UtilityBill
+
+    Address:
+      type: object
+      required: [street, city, state, zipCode, country]
+      properties:
+        street:
+          type: string
+          example: 123 Main St
+        city:
+          type: string
+          example: Ashburn
+        state:
+          type: string
+          pattern: '^[A-Z]{2}$'
+          example: VA
+        zipCode:
+          type: string
+          pattern: '^\d{5}(-\d{4})?$'
+          example: "20147"
+        country:
+          type: string
+          pattern: '^[A-Z]{2}$'
+          example: US
+
+    CreateCustomerResponse:
+      type: object
+      properties:
+        customerId:
+          type: string
+          pattern: '^CUST-[0-9]{3,10}$'
+          example: CUST-201
+        status:
+          type: string
+          enum: [CREATED, FAILED]
+          example: CREATED
+
+    LinkCustomerRequest:
+      type: object
+      required: [customerId, role, leadId]
+      properties:
+        customerId:
+          type: string
+          pattern: '^CUST-[0-9]{3,12}$'
+          example: CUST-123456
+        role:
+          type: string
+          enum: [primary-account-holder, joint-account-holder, authorized-signatory]
+          example: primary-account-holder
+        leadId:
+          type: string
+          pattern: '^LEAD-[0-9]{4}-[0-9]{3,10}$'
+          example: LEAD-2026-789
+
+    LinkCustomerResponse:
+      type: object
+      properties:
+        caseId:
+          type: string
+          pattern: '^CASE-[0-9]{4,10}$'
+          example: CASE-1001
+        customerLinked:
+          type: boolean
+          example: true
+
+    EligibilityCheckRequest:
+      type: object
+      required: [customerId, productId, income, residencyStatus, employmentStatus]
+      properties:
+        customerId:
+          type: string
+          pattern: '^CUST-[0-9]{3,12}$'
+          example: CUST-123456
+        productId:
+          type: string
+          pattern: '^[A-Z]{3}-[A-Z]{3,20}$'
+          example: CHK-PREMIUM
+        income:
+          type: number
+          minimum: 0
+          example: 50000
+        residencyStatus:
+          type: string
+          enum: [Resident, Non-Resident, Citizen, Permanent-Resident]
+          example: Resident
+        employmentStatus:
+          type: string
+          enum: [Employed, Self-Employed, Unemployed, Student, Retired]
+          example: Employed
+
+    EligibilityCheckResponse:
+      type: object
+      properties:
+        eligible:
+          type: boolean
+          example: true
+
+    KycInitiateRequest:
+      type: object
+      required: [customerId, kycType]
+      properties:
+        customerId:
+          type: string
+          pattern: '^CUST-[0-9]{3,12}$'
+          example: CUST-123456
+        kycType:
+          type: string
+          enum: [KYC_AML, KYC_BASIC, KYC_FULL]
+          example: KYC_AML
+
+    KycInitiateResponse:
+      type: object
+      properties:
+        kycStatus:
+          type: string
+          enum: [INITIATED, IN_PROGRESS, COMPLETED, FAILED]
+          example: INITIATED
+
+    GenerateDocumentPackRequest:
+      type: object
+      required: [caseId, documentTypes]
+      properties:
+        caseId:
+          type: string
+          pattern: '^CASE-[0-9]{4,10}$'
+          example: CASE-1001
+        documentTypes:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            example: TermsAndConditions
+
+    GenerateDocumentPackResponse:
+      type: object
+      properties:
+        documentPackId:
+          type: string
+          pattern: '^DOC-PACK-[0-9]{3,10}$'
+          example: DOC-PACK-101
+
+    SignDocumentRequest:
+      type: object
+      required: [signatureMethod, signedBy, signedAt, consent]
+      properties:
+        signatureMethod:
+          type: string
+          enum: [ESign, WetSign]
+          example: ESign
+        signedBy:
+          type: string
+          pattern: '^CUST-[0-9]{6}$'
+          example: CUST-123456
+        signedAt:
+          type: string
+          format: date-time
+          example: 2026-02-28T17:40:00Z
+        consent:
+          type: boolean
+          example: true
+
+    SignDocumentResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [SIGNED, FAILED]
+          example: SIGNED
+
+    ApproveCaseRequest:
+      type: object
+      required: [decision]
+      properties:
+        decision:
+          type: string
+          enum: [approved, rejected]
+          example: approved
+        reason:
+          type: string
+          example: All checks passed
+
+    ApproveCaseResponse:
+      type: object
+      properties:
+        caseId:
+          type: string
+          pattern: '^CASE-[0-9]{4,10}$'
+          example: CASE-1001
+        status:
+          type: string
+          enum: [APPROVED, REJECTED]
+          example: APPROVED
+
+    OpenCheckingAccountRequest:
+      type: object
+      required: [customerId, productId, modeOfAccount, initialDeposit]
+      properties:
+        customerId:
+          type: string
+          pattern: '^CUST-[0-9]{6}$'
+          example: CUST-123456
+        productId:
+          type: string
+          pattern: '^[A-Z0-9\-]{3,20}$'
+          example: CHK-PREMIUM
+        modeOfAccount:
+          type: string
+          enum: [Single, Joint]
+          example: Single
+        initialDeposit:
+          type: number
+          minimum: 0
+          example: 100
+
+    OpenCheckingAccountResponse:
+      type: object
+      properties:
+        accountId:
+          type: string
+          pattern: '^ACC-[0-9]{4,10}$'
+          example: ACC-9001
+        status:
+          type: string
+          enum: [ACTIVE, PENDING]
+          example: ACTIVE

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	
+	<sub-flow name="commonflowTo-PAPI-Sub_Flow" doc:id="97978527-b83c-4198-a915-cf52524c2bdf" >
+		<logger level="INFO" doc:name="Before calling PAPI" doc:id="77b032d3-aec6-41c0-8f49-27df1d62bf1c" message="#[payload]"/>
+		<http:request doc:name="Request to accountOpening Papi" doc:id="0c073be3-fef3-48fd-832d-4d0c2195795d" config-ref="accountOpeningPapi_config" method="#[vars.endpoint.method]" path="#[vars.endpoint.path]"/>
+		<logger level="INFO" doc:name="After calling PAPI" doc:id="8406fc95-5f0a-499a-9c93-ce720ef81345" message="#[payload]" />
+	</sub-flow>
+</mule>

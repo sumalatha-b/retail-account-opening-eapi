@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+  
+    <flow name="experience-eapi-main">
+        <http:listener config-ref="experience-eapi-httpListenerConfig" path="/api/*" allowedMethods="GET,POST,PUT,DELETE,OPTIONS">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+"Access-Control-Allow-Origin": attributes.headers.origin default "*",
+ "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+ "Access-Control-Allow-Headers": "Content-Type, Authorization",
+ "Access-Control-Allow-Credentials": "true"
+ }
+default vars.outboundHeaders]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <logger level="INFO" doc:name="MuleFlow -Started" doc:id="793fe843-92fb-4fbf-9212-05b572a3ab01" message='"UI is Connected to Mule EAPI"'/>
+		<apikit:router config-ref="experience-eapi-config" />
+		<error-handler ref="Global_Error_Handler" />
+  
+    </flow>
+    <flow name="experience-eapi-console">
+        <http:listener config-ref="experience-eapi-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="experience-eapi-config" />
+		<error-handler ref="Global_Error_Handler" />
+    </flow>
+    <flow name="post:\retail\account-opening\start:application\json:experience-eapi-config">
+		<flow-ref doc:name="Flow Reference" doc:id="f4c304c8-a498-4b7c-8ee3-020ce3ceb734" name="retail--account-opening-start-subFlow"/>
+    </flow>
+    <flow name="post:\retail\customer\create:application\json:experience-eapi-config">
+		<flow-ref doc:name="Flow Reference" doc:id="e134b7f9-9765-452f-ac57-731f28411628" name="retail-customer-create-subFlow"/>
+    </flow>
+</mule>

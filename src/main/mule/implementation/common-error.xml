@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="
+          http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+          http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+    
+    <error-handler name="Global_Error_Handler">
+        
+        <!-- APIKIT Error Handler -->
+        <on-error-propagate when='error.errorType.namespace == "APIKIT"' enableNotifications="true" logException="true">
+			<flow-ref doc:name="Flow Reference-APIKIT" doc:id="adcaf830-9136-42c4-a7da-7498bcf28a29" name="Global-error-handlerSub_Flow"/>
+        
+</on-error-propagate>
+<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" when='error.errorType.namespace == "MULE"'> 
+			<ee:transform doc:name="Transform Message" doc:id="0cd96b10-418d-4d83-9426-e2efce40dd7e">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+if (error.errorType.identifier == "COMPOSITE_ROUTING")
+    error.childErrors
+else
+    error]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<set-variable doc:name="Set Variable" doc:id="3bced73d-c267-49f4-a590-0737cf0c933d" variableName="httpStatus" value='#[%dw 2.0&#10;output application/json&#10;var isPostRequest = (error.errorType.identifier[0] == "COMPOSITE_ROUTING")&#10; &#10;var errorIdentifier = if (isPostRequest)&#10;    (payload.errorType.identifier[0] default "") as String&#10;else&#10;    (error.errorType.identifier default "") as String&#10;    &#10;    &#10;&#10;---&#10;errorIdentifier match {&#10;    case "BAD_REQUEST" -&gt; "400"&#10;    case "CONNECTIVITY" -&gt; "502"&#10;    case "FORBIDDEN" -&gt; "403"&#10;    case "METHOD_NOT_ALLOWED" -&gt; "405"&#10;    case "NOT_FOUND" -&gt; "404"&#10;    case "UNAUTHORIZED" -&gt; "401"&#10;    case "UNSUPPORTED_MEDIA_TYPE" -&gt; "415"&#10;    case "UNKNOWN" -&gt; "400"&#10;    case "COMPOSITE_ROUTING" -&gt; "400" &#10;    case "EXPRESSION" -&gt; "400"&#10;    else -&gt; "500"&#10;}]' />
+			<ee:transform doc:name="Transform Message" doc:id="8b08f660-3cf0-469f-9c02-08f67063886f">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0  
+output application/json skipNullOn="everywhere"
+ 
+---
+{
+  
+    "status": 
+      if ((payload.errorType.identifier == "UNKNOWN") or (error.errorType.identifier == "COMPOSITE_ROUTING"))
+        "BAD_REQUEST"
+      else
+        payload.errorType.identifier[0],
+ 
+    "code": vars.httpStatus,
+     "shortMessage": 
+      if ((payload.errorType.identifier == "UNKNOWN") or (error.errorType.identifier == "COMPOSITE_ROUTING"))
+        "BAD_REQUEST"
+      else
+        payload.errorType.identifier[0],
+ 
+ 
+      
+  
+  
+  
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+
+        </on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d35bfa9e-acc6-434b-a9b1-002d8c864c71" when='error.errorType.namespace == "HTTP"'>
+			<flow-ref doc:name="Flow Reference-HTTP" doc:id="951b42c5-bb8a-4547-9a17-b0bce95b0ec2" name="Global-error-handlerSub_Flow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="0e454f20-95a7-494c-ba9b-7d7038b1c0da" when='error.errorType.namespace == "REQUEST"' >
+			<flow-ref doc:name="Flow Reference-REQUEST" doc:id="f7a45131-e789-4194-acf0-1b76b3c91599" name="Global-error-handlerSub_Flow" />
+		</on-error-propagate>
+        
+    
+</error-handler>
+	<sub-flow name="Global-error-handlerSub_Flow" doc:id="b9bfbce3-2b8e-4be3-9b13-0aa1b623a9d0" >
+		<set-variable value='#[%dw 2.0&#10;output application/json&#10;var errorIdentifier = (error.errorType.identifier default "") as String&#10;---&#10;errorIdentifier match{&#10;	case is "BAD_REQUEST"-&gt; "400"&#10;	case is "NOT_FOUND" -&gt; "404"&#10;	case is "METHOD_NOT_ALLOWED"-&gt; "405"&#10;	case is "NOT_ACCEPTABLE"-&gt; "406"&#10;	case is "UNAUTHORIZED"-&gt;"401"&#10;	case is "UNSUPPORTED_MEDIA_TYPE"-&gt; "415"&#10;	case is "TOO_MANY_REQUESTS"-&gt; "429"&#10;	else -&gt; "500"&#10;}]' doc:name="HttpStatusCode" doc:id="44d1952d-2dfd-40d1-9262-c8143f31079e" variableName="httpStatus" />
+		<ee:transform doc:name="Error_Message" doc:id="dcb0f197-9190-4bcc-a1f4-011615a61abb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json  skipNullOn="everywhere"
+---
+{
+    
+    
+        "status": error.errorType[0],
+        "code": vars.httpStatus,   
+        "shortMessage":error.errorMessage.payload.shortMessage default error.description,
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+    
+
+</mule>
