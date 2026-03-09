@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
+ 
 <mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
-	<sub-flow name="retail--account-opening-start-subFlow" doc:id="61acbdf2-0683-4682-8675-9fb601ec2489" >
-		<logger level="INFO" doc:name="Start of the flow" doc:id="df6d0d5d-9d85-4dae-88c5-301bf3344954" message="#[payload]"/>
-		<ee:transform doc:name="requestPayload to PAPI" doc:id="4710221a-8d5b-42a0-afcb-0777799e4d4b" >
+	<sub-flow name="retail--account-opening-start-subFlow" doc:id="fd945fbb-384b-4667-83a7-61101b0894bc" >
+		<logger level="INFO" doc:name="Start of the flow" doc:id="10c364e1-3af3-49af-9f0f-a241700e09bf" message="#[payload]"/>
+		<ee:transform doc:name="requestPayload to PAPI" doc:id="98886b26-f9b7-4ad6-b51d-406108a67df6" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json skipNullOn="everywhere"
@@ -36,8 +36,8 @@ output application/java
 	}]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="call to PAPI" doc:id="39b94c50-37c8-486d-b38b-173a3289b091" name="commonflowTo-PAPI-Sub_Flow"/>
-		<ee:transform doc:name="finalResponce" doc:id="ba725039-c3ec-404d-bf69-ce15c198a314" >
+		<flow-ref doc:name="call to PAPI" doc:id="e57cb85b-fdd7-4f2f-a294-2cb1baa186e6" name="commonflowTo-PAPI-Sub_Flow"/>
+		<ee:transform doc:name="finalResponce" doc:id="3455de15-4dd0-48d5-a177-6d49ccb332b2" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json skipNullOn="everywhere"
@@ -49,24 +49,133 @@ payload ++ {
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="End of the flow" doc:id="b9b2efe7-2c5f-41b6-80fc-7eac067d35e2" message="#[payload]" />
+		<logger level="INFO" doc:name="End of the flow" doc:id="a5a3ed42-80fa-4ae9-921d-4d1bd15479e2" message="#[payload]" />
 	</sub-flow>
-	<sub-flow name="retail-customer-create-subFlow" doc:id="05131460-2943-40c3-813b-6fa9668367ce" >
-		<logger level="INFO" doc:name="Start of the flow" doc:id="9d2819ee-977c-4444-88e4-918531f4ac61" message="#[payload]" />
-		<ee:transform doc:name="requestPayload to PAPI" doc:id="09705a2c-df89-4d25-95f1-8def21a50380" >
+	<sub-flow name="retail-customer-create-subFlow" doc:id="a93f7998-1cb3-4115-8d9f-6c268baa1675" >
+		<logger level="INFO" doc:name="Start of the flow" doc:id="c3fbe93a-bc5c-4b4a-b88e-7458c437d17e" message="#[payload]" />
+		<ee:transform doc:name="requestPayload to PAPI" doc:id="d783bc76-e904-4306-b800-813b5536ca47" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json skipNullOn="everywhere"
+output application/json
+fun buildPartyName(customer) =
+  customer.firstName ++ " " ++ customer.lastName
+ 
+ 
+fun buildPartyAddress(address, countryCode) = {
+  addressLine1:         address.street,
+  addressCityName:      address.city,
+  addressStateProvince: address.state,
+  addressPostalCode:    address.zip,
+  addressCountryCode:   countryCode
+}
+ 
+ 
+fun buildInvolvementAddress(addr) = {
+  addressLine1:         addr.addressLine,
+  addressCityName:      addr.city,
+  addressStateProvince: addr.state,
+  addressPostalCode:    addr.postalCode,
+  addressCountryCode:   addr.country
+}
+ 
+ 
+fun buildUSCitizenIdentification(citizenship) = {
+  partyLegalStatus: "us_citizen",
+  partyIdentificationRecord: {
+    partyIdentificationType:  "SSN",
+    partyIdentificationValue: citizenship.ssnOrItin
+  }
+}
+ 
+ 
+fun buildNonUSIdentification(citizenship) = {
+  partyLegalStatus: "non_us",
+  partyIdentificationRecord: {
+    partyIdentificationType:          "PASSPORT",
+    partyIdentificationValue:         citizenship.passport.number,
+    partyIdentificationIssueDate:     citizenship.passport.issuanceDate,
+    partyIdentificationExpiryDate:    citizenship.passport.expirationDate,
+    partyIdentificationIssuingCountry: citizenship.passport.country
+  },
+ 
+  partyTaxIdentificationRecord:
+    if (citizenship.ssnOrItin == null) null
+    else {
+      partyIdentificationType:  "SSN",
+      partyIdentificationValue: citizenship.ssnOrItin
+    },
+  partyVisaRecord: {
+    partyVisaType:       citizenship.visa."type",
+    partyVisaNumber:     citizenship.visa.number,
+    partyVisaIssueDate:  citizenship.visa.issueDate,
+    partyVisaExpiryDate: citizenship.visa.expiryDate
+  },
+ 
+  otherPartyIdentificationRecords:
+    citizenship.otherGovernmentIds map (id) -> {
+      partyIdentificationType:  id.idType,
+      partyIdentificationValue: id.idValue
+    }
+}
+ 
+ 
+fun buildPartyInvolvement(profiles) =
+  profiles map (profile) ->
+    if (profile.profileType == "student")
+ 
+      {
+        partyInvolvementType: "EDUCATION",
+        partyInvolvementRecord: {
+          institutionName:              profile.universityName,
+          institutionStudentReference:  profile.studentId,
+          studentVisaDocumentReference: profile.i20Number default null,
+          partyInvolvementEndDate:      profile.expectedGraduation,
+          partyInvolvementAddress:
+            profile.addresses map (addr) -> buildInvolvementAddress(addr)
+        }
+      }
+    else
+    
+      {
+        partyInvolvementType: "EMPLOYMENT",
+        partyInvolvementRecord: {
+          institutionName:                 profile.organizationName,
+          employmentVisaDocumentReference: profile.h1bOrEadNumber default null,
+          partyInvolvementStartDate:       profile.employmentStart,
+          partyInvolvementAddress:
+            profile.addresses map (addr) -> buildInvolvementAddress(addr)
+        }
+      }
+ 
+ 
 ---
 {
-  "customerOnboardingChannel": payload.channel,
-  "productServiceType": payload.productType,
-  "customerOnboardingSchedule": "Standard",
-  "prospectType": "INDIVIDUAL",
-   "fullName": payload.fullName,
-  "email": if (!isEmpty(payload.email)) payload.email else null,
-  "phoneNumber": if (!isEmpty(payload.phoneNumber)) payload.phoneNumber else null
-}]]></ee:set-payload>
+ 
+  onboardingCaseReference: payload.caseId,
+ 
+ 
+  partyRecord: {
+    partyName:        buildPartyName(payload.customer),
+    partyDateOfBirth: payload.customer.dateOfBirth,
+    partyNationality: payload.customer.country,
+    partyContactDetails: {
+      partyContactEmailAddress: payload.customer.email default null,
+      partyContactPhone:        payload.customer.phone default null
+    },
+    partyAddress: buildPartyAddress(payload.customer.address, payload.customer.country)
+  },
+ 
+ 
+  partyIdentification:
+    if (payload.citizenship.status == "us_citizen")
+      buildUSCitizenIdentification(payload.citizenship)
+    else
+      buildNonUSIdentification(payload.citizenship),
+ 
+  
+  partyInvolvement: buildPartyInvolvement(payload.additionalProfiles)
+}
+]]></ee:set-payload>
 			</ee:message>
 			<ee:variables >
 				<ee:set-variable variableName="inputPayload" ><![CDATA[%dw 2.0
@@ -83,24 +192,20 @@ output application/java
 	}]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="call to PAPI" doc:id="b62149f0-d9f0-4918-a0c9-98ff9e1ccb19" name="commonflowTo-PAPI-Sub_Flow" />
-		<ee:transform doc:name="finalResponce" doc:id="81c0ba64-fa17-48c9-9ec1-d6a70ed30265" >
+		<flow-ref doc:name="call to PAPI" doc:id="c8fdd257-9260-48b0-9add-4f7cca7f307e" name="commonflowTo-PAPI-Sub_Flow" />
+		<ee:transform doc:name="finalResponce" doc:id="bfaf5094-1fa5-4aa8-8bec-fe9728dc8839" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json skipNullOn="everywhere"
 ---
-payload ++ {
-"fullName": vars.inputPayload.fullName,
-  "email": if (!isEmpty(vars.inputPayload.email)) vars.inputPayload.email else null,
-  "phoneNumber": if (!isEmpty(vars.inputPayload.phoneNumber)) vars.inputPayload.phoneNumber else null
-}]]></ee:set-payload>
+payload ]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="End of the flow" doc:id="1726c2a7-e774-4a73-ab48-36d7143c3826" message="#[payload]" />
+		<logger level="INFO" doc:name="End of the flow" doc:id="b007bcf0-8b06-4fcd-8a7f-bb975c771bef" message="#[payload]" />
 	</sub-flow>
-	<sub-flow name="retail-account-opening-caseID-link-customer-subFlow" doc:id="97f105df-32f7-4a8b-ab08-099b27904b3c" >
-		<logger level="INFO" doc:name="Start of the flow" doc:id="fff23bce-b435-436e-a6b7-c4327e6a9c48" message="#[payload]" />
-		<ee:transform doc:name="requestPayload to PAPI" doc:id="07031969-cd78-486b-b1cb-0c89c47119fe" >
+	<sub-flow name="retail-account-opening-caseID-link-customer-subFlow" doc:id="fb238796-c8b3-4bba-96be-18129e90ce95" >
+		<logger level="INFO" doc:name="Start of the flow" doc:id="1239f63a-fc45-4115-9202-584d86359649" message="#[payload]" />
+		<ee:transform doc:name="requestPayload to PAPI" doc:id="d65e2399-1000-4761-ac45-f0153deb0b3c" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json skipNullOn="everywhere"
@@ -130,8 +235,8 @@ output application/java
 	}]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="call to PAPI" doc:id="3bea09a1-bde0-494a-8b7a-a97f41d8ec45" name="commonflowTo-PAPI-Sub_Flow" />
-		<ee:transform doc:name="finalResponce" doc:id="1848ef10-cd3e-4ddd-b646-bd90d73918ea" >
+		<flow-ref doc:name="call to PAPI" doc:id="289f4e3a-dbc5-4487-bb1d-92b79a90e009" name="commonflowTo-PAPI-Sub_Flow" />
+		<ee:transform doc:name="finalResponce" doc:id="5e2d16fb-d766-45c3-963b-0efca66a6889" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json skipNullOn="everywhere"
@@ -143,11 +248,11 @@ payload ++ {
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="End of the flow" doc:id="6df05cd4-225c-4743-a8dd-98d1e3f4fe64" message="#[payload]" />
+		<logger level="INFO" doc:name="End of the flow" doc:id="2558d492-1b92-4b74-8b0c-941aa9983913" message="#[payload]" />
 	</sub-flow>
-	<sub-flow name="retail-products-eligibility-check-subFlow" doc:id="418f6ffb-c299-4d79-912a-83ecada1104c" >
-		<logger level="INFO" doc:name="Start of the flow" doc:id="e939b261-178d-43de-bfca-3e028e598d44" message="#[payload]" />
-		<ee:transform doc:name="requestPayload to PAPI" doc:id="0b62a760-4b6c-468e-8923-8a63916b1000" >
+	<sub-flow name="retail-products-eligibility-check-subFlow" doc:id="6acbe5b5-ed76-495e-a477-b5e39a76edeb" >
+		<logger level="INFO" doc:name="Start of the flow" doc:id="cb303ea2-5944-44e9-a720-edbe11298ae6" message="#[payload]" />
+		<ee:transform doc:name="requestPayload to PAPI" doc:id="95a6f0e4-2996-4ae1-bbfa-f54c0672224e" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json skipNullOn="everywhere"
@@ -177,8 +282,8 @@ output application/java
 	}]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="call to PAPI" doc:id="dd03f9fa-6ce0-4053-bf79-b952e5e1ce5a" name="commonflowTo-PAPI-Sub_Flow" />
-		<ee:transform doc:name="finalResponce" doc:id="e1e01584-7a03-4f49-b430-3e6aff70ff26" >
+		<flow-ref doc:name="call to PAPI" doc:id="ca23ee74-5767-4ec1-8b0e-32e2a6478ad9" name="commonflowTo-PAPI-Sub_Flow" />
+		<ee:transform doc:name="finalResponce" doc:id="f12dbff6-b9d3-4a0b-bf60-1b0516730bcb" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json skipNullOn="everywhere"
@@ -190,11 +295,11 @@ payload ++ {
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="End of the flow" doc:id="d47c975e-9fa6-48da-922d-67dd94fec6e4" message="#[payload]" />
+		<logger level="INFO" doc:name="End of the flow" doc:id="f8aece45-3a42-4248-9586-9b1255ad676c" message="#[payload]" />
 	</sub-flow>
-	<sub-flow name="retail-kyc-initiate-subFlow" doc:id="5d945576-fe31-4f4c-a626-ddd2bd5ca8a9" >
-		<logger level="INFO" doc:name="Start of the flow" doc:id="d9db0200-a726-46c7-acb7-f1b04257631b" message="#[payload]" />
-		<ee:transform doc:name="requestPayload to PAPI" doc:id="1c53fd30-4342-41d2-b661-dbdf9e7a5ef5" >
+	<sub-flow name="retail-kyc-initiate-subFlow" doc:id="74bab931-3fb2-4b4d-8689-909b5a04162e" >
+		<logger level="INFO" doc:name="Start of the flow" doc:id="6d3b28d6-c692-40b7-b98b-991475b5ae23" message="#[payload]" />
+		<ee:transform doc:name="requestPayload to PAPI" doc:id="8d5d7cdb-36a1-4802-9e75-46f0ea196294" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json skipNullOn="everywhere"
@@ -224,8 +329,8 @@ output application/java
 	}]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="call to PAPI" doc:id="c574962b-8e53-49a1-8855-3f4dc2b27e07" name="commonflowTo-PAPI-Sub_Flow" />
-		<ee:transform doc:name="finalResponce" doc:id="8cbe71f0-b689-4b69-96e6-6aaa059c3257" >
+		<flow-ref doc:name="call to PAPI" doc:id="83fca226-c381-4d15-a156-e77372f339e8" name="commonflowTo-PAPI-Sub_Flow" />
+		<ee:transform doc:name="finalResponce" doc:id="843801b8-adf5-4ca7-b428-f2ff6adf5475" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json skipNullOn="everywhere"
@@ -237,11 +342,11 @@ payload ++ {
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="End of the flow" doc:id="49d3b263-6567-4013-8f3f-b2304ccabe34" message="#[payload]" />
+		<logger level="INFO" doc:name="End of the flow" doc:id="d9facc0f-4c82-442c-a17d-85aeefb274a5" message="#[payload]" />
 	</sub-flow>
-	<sub-flow name="retail-documents-generate-pack-subFlow" doc:id="60b8d31f-f217-4096-a583-9d0ef0fcd8a8" >
-		<logger level="INFO" doc:name="Start of the flow" doc:id="88ed7ec5-cba8-49ff-b069-6276e45a99ef" message="#[payload]" />
-		<ee:transform doc:name="requestPayload to PAPI" doc:id="86ff17aa-19bb-4eda-abfa-ec85ec6e7abc" >
+	<sub-flow name="retail-documents-generate-pack-subFlow" doc:id="376ed017-5dab-4c9b-aa81-35c7218db666" >
+		<logger level="INFO" doc:name="Start of the flow" doc:id="43942719-aa60-47b7-97dc-900d6018ee73" message="#[payload]" />
+		<ee:transform doc:name="requestPayload to PAPI" doc:id="f2c87dfe-6140-45e2-b47f-1c41e6f3e1fe" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json skipNullOn="everywhere"
@@ -271,8 +376,8 @@ output application/java
 	}]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="call to PAPI" doc:id="b75bdbe0-b9ce-41e0-9904-8ff2c03eb113" name="commonflowTo-PAPI-Sub_Flow" />
-		<ee:transform doc:name="finalResponce" doc:id="6c2e720c-4afa-4efd-ac2d-f2c19d38629b" >
+		<flow-ref doc:name="call to PAPI" doc:id="e4ed93c2-2d07-4d32-9d66-ff374ea24bab" name="commonflowTo-PAPI-Sub_Flow" />
+		<ee:transform doc:name="finalResponce" doc:id="b520ebe2-e270-47cd-88fb-41597b819d3a" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json skipNullOn="everywhere"
@@ -284,11 +389,11 @@ payload ++ {
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="End of the flow" doc:id="4912076e-18cf-4ffa-98bd-6d5d31d64e6d" message="#[payload]" />
+		<logger level="INFO" doc:name="End of the flow" doc:id="79b5a592-ce28-46ef-a9e9-39705550879c" message="#[payload]" />
 	</sub-flow>
-	<sub-flow name="retail-documents-doucmentId-sign-subFlow" doc:id="972ad918-3b66-402c-9331-e640f16222f7" >
-		<logger level="INFO" doc:name="Start of the flow" doc:id="9762ea2b-c5af-4457-a7e5-ba153e95c0cd" message="#[payload]" />
-		<ee:transform doc:name="requestPayload to PAPI" doc:id="07fb55cc-c131-4b8d-8db2-4d60b7fe6bca" >
+	<sub-flow name="retail-documents-doucmentId-sign-subFlow" doc:id="38f517c0-300f-4871-bb2d-39dd2e963a7b" >
+		<logger level="INFO" doc:name="Start of the flow" doc:id="9ca27e1e-a35d-4c21-85a0-95425fd818ed" message="#[payload]" />
+		<ee:transform doc:name="requestPayload to PAPI" doc:id="306173c9-ba4c-4984-affd-35d64c817f6f" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json skipNullOn="everywhere"
@@ -318,8 +423,8 @@ output application/java
 	}]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="call to PAPI" doc:id="7179dbc9-3a8a-4ca1-8037-627c3788245b" name="commonflowTo-PAPI-Sub_Flow" />
-		<ee:transform doc:name="finalResponce" doc:id="aeecc9ff-eb54-492a-b7f4-7feb3fc5e13c" >
+		<flow-ref doc:name="call to PAPI" doc:id="acd88a5f-7079-4d00-a296-33bbcf3726de" name="commonflowTo-PAPI-Sub_Flow" />
+		<ee:transform doc:name="finalResponce" doc:id="1530cfb5-c91f-4327-bf41-fe91c98a27e1" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json skipNullOn="everywhere"
@@ -331,11 +436,11 @@ payload ++ {
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="End of the flow" doc:id="877f45c9-5134-45e2-a6c9-b6fdd866867c" message="#[payload]" />
+		<logger level="INFO" doc:name="End of the flow" doc:id="fca905f0-8eb5-438c-a9b3-28e598f2bfe3" message="#[payload]" />
 	</sub-flow>
-	<sub-flow name="retail-account-opening-caseId-approve-subFlow" doc:id="e09d2602-3153-4140-a0df-b78ff78f865a" >
-		<logger level="INFO" doc:name="Start of the flow" doc:id="726aa9b1-6635-466b-8651-a4752c70de4a" message="#[payload]" />
-		<ee:transform doc:name="requestPayload to PAPI" doc:id="9bb97583-d66c-4ade-b9a9-372c7fd74e16" >
+	<sub-flow name="retail-account-opening-caseId-approve-subFlow" doc:id="c144ab08-6679-475a-bd84-eefafd2bc813" >
+		<logger level="INFO" doc:name="Start of the flow" doc:id="486320d2-d72a-464c-965e-a4af5d57396d" message="#[payload]" />
+		<ee:transform doc:name="requestPayload to PAPI" doc:id="2ed3bec2-949f-4eba-93d8-599174484168" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json skipNullOn="everywhere"
@@ -365,8 +470,8 @@ output application/java
 	}]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="call to PAPI" doc:id="230ad2f8-3b13-4753-88aa-8b3333fe050a" name="commonflowTo-PAPI-Sub_Flow" />
-		<ee:transform doc:name="finalResponce" doc:id="fb63df9e-e557-479d-88a1-ce6da551a299" >
+		<flow-ref doc:name="call to PAPI" doc:id="a5458fe3-c7be-4ff1-9463-f79a76c856a7" name="commonflowTo-PAPI-Sub_Flow" />
+		<ee:transform doc:name="finalResponce" doc:id="dd6d0b03-3d9b-44ed-8534-5b123bd20d61" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json skipNullOn="everywhere"
@@ -378,11 +483,11 @@ payload ++ {
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="End of the flow" doc:id="9300a85a-766d-49fa-9da7-ca3696d5fdf4" message="#[payload]" />
+		<logger level="INFO" doc:name="End of the flow" doc:id="dd435cef-93b7-4d3d-995a-5a458615c793" message="#[payload]" />
 	</sub-flow>
-	<sub-flow name="retail-accounts-checking-open-subFlow" doc:id="6668c4bc-b4c2-460e-a343-c8aa0a0dce4e" >
-		<logger level="INFO" doc:name="Start of the flow" doc:id="73e5ea31-ab79-49f8-90df-eeab3fb55917" message="#[payload]" />
-		<ee:transform doc:name="requestPayload to PAPI" doc:id="b1240116-dfa2-476a-9d4a-96642437d1c6" >
+	<sub-flow name="retail-accounts-checking-open-subFlow" doc:id="e6fbc048-898b-49c2-a8bb-f7ea32608c0c" >
+		<logger level="INFO" doc:name="Start of the flow" doc:id="057a00c3-23c3-4071-a050-5a0f5e2600bd" message="#[payload]" />
+		<ee:transform doc:name="requestPayload to PAPI" doc:id="8d491740-c55d-4e7e-aca6-0473e0523891" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json skipNullOn="everywhere"
@@ -412,8 +517,8 @@ output application/java
 	}]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<flow-ref doc:name="call to PAPI" doc:id="eeafba7a-3a19-4ed7-bee2-b7730d72ffb7" name="commonflowTo-PAPI-Sub_Flow" />
-		<ee:transform doc:name="finalResponce" doc:id="d82f4a17-a9db-4a2b-8f01-8d35dffad03a" >
+		<flow-ref doc:name="call to PAPI" doc:id="d42860ae-46b8-4c85-b052-379382d2ff4b" name="commonflowTo-PAPI-Sub_Flow" />
+		<ee:transform doc:name="finalResponce" doc:id="c0714f30-8c65-4df4-88f1-79c9d9399e48" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json skipNullOn="everywhere"
@@ -425,6 +530,8 @@ payload ++ {
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="End of the flow" doc:id="09133cd3-87c9-488b-8578-1ab092819e39" message="#[payload]" />
+		<logger level="INFO" doc:name="End of the flow" doc:id="c7cc2e22-29b2-493b-99b4-38e53c26a598" message="#[payload]" />
 	</sub-flow>
 </mule>
+ 
+ 
