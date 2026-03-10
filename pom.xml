@@ -58,7 +58,7 @@
 		<dependency>
 			<groupId>a09c0161-1d9b-4ade-9a09-0e11e7d07848</groupId>
 			<artifactId>experience-eapi</artifactId>
-			<version>1.0.17</version>
+			<version>1.0.18</version>
 			<classifier>oas</classifier>
 			<type>zip</type>
 		</dependency>

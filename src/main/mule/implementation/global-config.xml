@@ -12,7 +12,7 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 	  <http:listener-config name="experience-eapi-httpListenerConfig">
         <http:listener-connection host="0.0.0.0" port="8081" />
     </http:listener-config>
-    <apikit:config name="experience-eapi-config" api="resource::a09c0161-1d9b-4ade-9a09-0e11e7d07848:experience-eapi:1.0.17:oas:zip:experience-eapi.yaml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <apikit:config name="experience-eapi-config" api="resource::a09c0161-1d9b-4ade-9a09-0e11e7d07848:experience-eapi:1.0.18:oas:zip:experience-eapi.yaml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
 	<http:request-config name="accountOpeningPapi_config" doc:name="HTTP Request config" doc:id="f51ce3e7-4816-4ce4-a9ef-3c39357c61e3" >
 		<http:request-connection protocol="HTTPS" host="${accountOpeningPapi.host}" port="${accountOpeningPapi.port}">
 			<tls:context >

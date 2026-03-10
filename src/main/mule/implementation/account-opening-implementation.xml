@@ -56,7 +56,7 @@ payload ++ {
 		<ee:transform doc:name="requestPayload to PAPI" doc:id="d783bc76-e904-4306-b800-813b5536ca47" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
+output application/json skipNullOn="everywhere"
 fun buildPartyName(customer) =
   customer.firstName ++ " " ++ customer.lastName
  
