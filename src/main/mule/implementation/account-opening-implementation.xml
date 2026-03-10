@@ -5,7 +5,7 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<sub-flow name="retail--account-opening-start-subFlow" doc:id="fd945fbb-384b-4667-83a7-61101b0894bc" >
-		<logger level="INFO" doc:name="Start of the flow" doc:id="10c364e1-3af3-49af-9f0f-a241700e09bf" message="#[payload]"/>
+		<logger level="INFO" doc:name="onboarding cases flow started" doc:id="10c364e1-3af3-49af-9f0f-a241700e09bf" message="#[payload]"/>
 		<ee:transform doc:name="requestPayload to PAPI" doc:id="98886b26-f9b7-4ad6-b51d-406108a67df6" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
