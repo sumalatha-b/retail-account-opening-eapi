@@ -52,7 +52,7 @@ payload ++ {
 		<logger level="INFO" doc:name="End of the flow" doc:id="a5a3ed42-80fa-4ae9-921d-4d1bd15479e2" message="#[payload]" />
 	</sub-flow>
 	<sub-flow name="retail-customer-create-subFlow" doc:id="a93f7998-1cb3-4115-8d9f-6c268baa1675" >
-		<logger level="INFO" doc:name="Start of the flow" doc:id="c3fbe93a-bc5c-4b4a-b88e-7458c437d17e" message="#[payload]" />
+		<logger level="INFO" doc:name="Start of the flow" doc:id="c3fbe93a-bc5c-4b4a-b88e-7458c437d17e" message="#[%dw 2.0&#10;output application/json&#10;import * from modules::maskingPayload&#10;var fields = p('masking.fieldsList')&#10;var logMsg = &quot;customer create flow start&quot;&#10;---&#10;maskingPayload:createDebugLog(logMsg, flow.name, payload, fields)]" />
 		<ee:transform doc:name="requestPayload to PAPI" doc:id="d783bc76-e904-4306-b800-813b5536ca47" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0

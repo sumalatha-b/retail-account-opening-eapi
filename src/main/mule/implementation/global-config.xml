@@ -22,5 +22,6 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 	</http:request-config>
 	<configuration-properties doc:name="Configuration properties" doc:id="d3d59167-7d60-4580-9bc2-c7356510f561" file="properties/dev.yaml" />
 	<api-gateway:autodiscovery apiId="20771121" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="ade25b54-f7de-4f1a-a656-79a1d0143fe3" flowRef="experience-eapi-main" />
+	<configuration-properties doc:name="Configuration properties" doc:id="740d48f8-168e-477e-8c6e-85ff077b2891" file="properties\common.yaml" />
  	 
 </mule>

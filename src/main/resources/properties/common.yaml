@@ -1,0 +1,3 @@
+masking:
+  customer: "firstName,lastName"
+  fieldsList: "${masking.customer}" 

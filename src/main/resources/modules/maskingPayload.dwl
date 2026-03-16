@@ -1,7 +1,5 @@
 %dw 2.0
-import * from dw::core::Strings
-output application/json
- 
+import * from dw::core::Strings 
 fun getMaskDataFields(fields) =
     (fields splitBy ",") map ((item) -> trim(upper(item)))
  
@@ -35,10 +33,3 @@ fun createDebugLog(logMsg, flowName, payload, fields) = {
     payload: maskData(payload, null, getMaskDataFields(fields))
 }
  
----
-createDebugLog(
-    "Request Payload",
-    "SampleFlow",
-    payload,
-    "accountNumber,ssn,password"
-)
